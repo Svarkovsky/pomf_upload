@@ -37,7 +37,7 @@ for FILES in "$@"
 do
 #
 
-if [ ! -e $FILES ] 
+if [ ! -e "$1" ] 
 then
 case $1 in
 h|help|-h|--h|-help|--help)
@@ -45,22 +45,25 @@ h|help|-h|--h|-help|--help)
 esac
 fi
 
-[ -f "$1" ] || { echo 'File does not exist!'; usage; }
+FRS=`echo $FILES | sed 's/[ (),]/_/g'`
+mv -v "$FILES" "$FRS" 
+
+[ -f "$FRS" ] || { echo 'File does not exist!'; usage; }
 
 
 upload_url='https://pomf.space/upload.php'
 return_url='https://a.pomf.space'
 
-json_out="$(curl -# --form files[]=@"$FILES" $upload_url)" 
+json_out="$(curl -# --form files[]=@"$FRS" $upload_url)" 
 
 remote_filename="$(echo $json_out | jq -r '.files[0].url')"
 success=$(echo $json_out | jq -r '.success')
 
-if [ $success = true ] 
+if [[ $success = true ]] 
 then
 	file_url="$return_url/$(basename $remote_filename)"
 	echo `date +%d.%m.%Y\ %H:%M:%S | tr -d '\012'; echo -n ' ' `
-	echo "SHA Checksum $(shasum "$FILES")"   
+	echo "SHA Checksum $(shasum "$FRS")"   
 	echo "$file_url" 
 else
 	echo 'File upload unsuccessful!'
